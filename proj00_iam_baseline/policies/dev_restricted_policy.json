@@ -1,0 +1,29 @@
+{
+	"Version":"2012-10-17",
+	"Statement": [
+		{
+		"Effect": "Deny",
+		"Action": [
+			"iam:CreateUser",
+			"iam:DeleteUser",
+			"ec2:CreateVpc*",
+			"ec2:DeleteVpc*",
+			"ec2:CreateInternetGateway*",
+			"ec2:DeleteInternetGateway"
+		],
+		"Resource": "*"
+		},
+		{
+		"Effect": "Allow",
+		"Action": [
+			"ec2:Describe*",
+			"cloudwatch:Describe*",
+			"cloudwatch:Get*",
+			"cloudwatch:List*",
+			"s3:Get*",
+			"s3:List*"
+		],
+		"Resource": "*"
+		}
+	]
+}

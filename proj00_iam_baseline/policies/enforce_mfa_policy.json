@@ -1,0 +1,22 @@
+{
+    "Version":"2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "NotAction": [
+                "iam:ChangePassword",
+                "iam:GetUser",
+                "iam:CreateVirtualMFADevice",
+                "iam:EnableMFADevice",
+                "iam:ResyncMFADevice",
+                "iam:ListMFADevices",
+                "iam:ListVirtualMFADevices",
+                "sts:GetSessionToken"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "BoolIfExists": {"aws:MultiFactorAuthPresent": "false"}
+            }
+        }
+    ]
+}
