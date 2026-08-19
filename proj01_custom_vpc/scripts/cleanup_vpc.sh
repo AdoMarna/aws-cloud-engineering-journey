@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-vpc_id=$(aws ec2 describe-vpcs --filter "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
+vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
 
 if [[ -z "$vpc_id" || "$vpc_id" == "None" ]]
 then
@@ -19,9 +19,9 @@ iso_subnet_id_az1=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=Iso
 iso_subnet_id_az2=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=Isolated-Subnet-AZ2" "Name=vpc-id,Values=$vpc_id" --query "Subnets[0].SubnetId" --output text)
 
 # security groups
-SG_ALB_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=First Security Group" --query SecurityGroups[0].GroupId --output text)
-SG_App_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=Second Security Group" --query SecurityGroups[0].GroupId --output text)
-SG_DB_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=Third Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_ALB_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=First Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_App_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=Second Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_DB_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=Third Security Group" --query SecurityGroups[0].GroupId --output text)
 
 # nacl
 default_nacl_id=$(aws ec2 describe-network-acls --query "NetworkAcls[?VpcId=='$vpc_id'].NetworkAclId" --output text)
@@ -30,32 +30,32 @@ assoc_id_two=$(aws ec2 describe-network-acls --query "NetworkAcls[0].Association
 nacl_id=$(aws ec2 describe-network-acls --filters "Name=tag:Name,Values=MyNaclCustom" "Name=tag:Project,Values=proj01" --query NetworkAcl.NetworkAclId --output text)
 
 # internet gateway
-igw_id=$(aws ec2 describe-internet-gateways --filter "Name=tag:Project,Values=proj01" --query "InternetGateways[0].InternetGatewayId" --output text)
+igw_id=$(aws ec2 describe-internet-gateways --filters "Name=tag:Project,Values=proj01" --query "InternetGateways[0].InternetGatewayId" --output text)
 
 # elastic ips
-eip_id_one=$(aws ec2 describe-addresses --filter "Name=tag:Name,Values=First EIP" --query "Addresses[0].AllocationId" --output text)
-eip_id_two=$(aws ec2 describe-addresses --filter "Name=tag:Name,Values=Second EIP" --query "Addresses[0].AllocationId" --output text)
+eip_id_one=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=First EIP" --query "Addresses[0].AllocationId" --output text)
+eip_id_two=$(aws ec2 describe-addresses --filters "Name=tag:Name,Values=Second EIP" --query "Addresses[0].AllocationId" --output text)
 
 # public route table
-pub_route_table_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].RouteTableId" --output text)
-pub_az1_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].Associations[?SubnetId=='$pub_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
-pub_az2_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].Associations[?SubnetId=='$pub_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
+pub_route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].RouteTableId" --output text)
+pub_az1_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].Associations[?SubnetId=='$pub_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
+pub_az2_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Public Route Table" --query "RouteTables[0].Associations[?SubnetId=='$pub_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
 
 # private route tables & NAT gateways
-private_az1_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
-private_route_table_id_one=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].RouteTableId" --output text)
+private_az1_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
+private_route_table_id_one=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].RouteTableId" --output text)
 nat_id_one=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" --query "NatGateways[0].NatGatewayId" --output text)
-private_route_table_id_two=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].RouteTableId" --output text)
-private_az2_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
+private_route_table_id_two=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].RouteTableId" --output text)
+private_az2_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
 nat_id_two=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" --query "NatGateways[0].NatGatewayId" --output text)
 
 # vpc endpoint
-vpc_endpoint_id=$(aws ec2 describe-vpc-endpoints --filter "Name=tag:Name,Values=VPC Endpoint" --query VpcEndpoints[0].VpcEndpointId --output text)
+vpc_endpoint_id=$(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=VPC Endpoint" --query VpcEndpoints[0].VpcEndpointId --output text)
 
 # isolated route table
-iso_az1_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].Associations[?SubnetId=='$iso_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
-iso_az2_associated_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].Associations[?SubnetId=='$iso_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
-iso_route_table_id=$(aws ec2 describe-route-tables --filter "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].RouteTableId" --output text)
+iso_az1_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].Associations[?SubnetId=='$iso_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
+iso_az2_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].Associations[?SubnetId=='$iso_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
+iso_route_table_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Isolated Route Table" --query "RouteTables[0].RouteTableId" --output text)
 
 # delete nacl
 if [[ -n "$nacl_id" && "$nacl_id" != "None" ]]

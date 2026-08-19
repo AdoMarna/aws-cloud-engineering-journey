@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-vpc_id=$(aws ec2 describe-vpcs --filter "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
+vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
 
 if [[ -z "$vpc_id" || "$vpc_id" == "None" ]]
 then
@@ -10,7 +10,7 @@ then
 	exit 1
 fi
 
-SG_ALB_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=First Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_ALB_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=First Security Group" --query SecurityGroups[0].GroupId --output text)
 if [[ -z "$SG_ALB_id" || "$SG_ALB_id" == "None" ]]
 then
 	printf "==> Creating SG-ALB\n"
@@ -31,7 +31,7 @@ else
 	printf "==> Rules already in place for SG-ALB, continuing...\n"
 fi
 
-SG_App_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=Second Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_App_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=Second Security Group" --query SecurityGroups[0].GroupId --output text)
 if [[ -z "$SG_App_id" || "$SG_App_id" == "None" ]]
 then
 	printf "==> Creating SG-App\n"
@@ -52,7 +52,7 @@ else
 	printf "==> Rules already in place for SG-App, continuing...\n"
 fi
 
-SG_DB_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=Third Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_DB_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=Third Security Group" --query SecurityGroups[0].GroupId --output text)
 if [[ -z "$SG_DB_id" || "$SG_DB_id" == "None" ]]
 then
 	printf "==> Creating SG-DB\n"

@@ -61,7 +61,7 @@ Verification command (used in the deployment "fire test"):
 
 ```bash
 aws ec2 describe-route-tables \
-  --filter "Name=tag:Name,Values=Isolated Route Table" \
+  --filters "Name=tag:Name,Values=Isolated Route Table" \
   --query "RouteTables[0].Routes[?DestinationCidrBlock=='0.0.0.0/0']" \
   --output json
 ```

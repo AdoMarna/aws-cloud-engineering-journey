@@ -129,11 +129,11 @@ else
 			--protocol tcp \
 			--port "$port" \
 			--cidr 10.0.0.0/16 \
-			2>/dev/null
+			>/dev/null
 	fi
 
 	log "Deleting security group SG"
-	aws ec2 delete-security-group --group-id "$SG_id"
+	aws ec2 delete-security-group --group-id "$SG_id" >/dev/null
 fi
 
 for param_name in "$ENV_PARAM_NAME" "$DB_PASSWORD_PARAM_NAME"

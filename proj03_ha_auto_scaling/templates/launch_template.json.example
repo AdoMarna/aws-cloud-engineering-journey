@@ -1,0 +1,34 @@
+{
+  "ImageId": "",
+  "InstanceType": "t3.micro",
+  "SecurityGroupIds": [],
+  "UserData": "",
+  "IamInstanceProfile": {
+    "Name": ""
+  },
+  "MetadataOptions": {
+    "InstanceMetadataTags": "enabled",
+    "HttpEndpoint": "enabled",
+    "HttpTokens": "required",
+    "HttpPutResponseHopLimit": 2
+  },
+  "TagSpecifications": [
+    {
+      "ResourceType": "instance",
+      "Tags": [
+        {
+          "Key": "Name",
+          "Value": "my_launch_template"
+        },
+        {
+          "Key": "Project",
+          "Value": "proj03"
+        },
+        {
+          "Key": "Environment",
+          "Value": "dev"
+        }
+      ]
+    }
+  ]
+}

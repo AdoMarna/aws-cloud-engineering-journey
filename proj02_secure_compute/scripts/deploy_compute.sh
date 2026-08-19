@@ -12,10 +12,15 @@ readonly ENVIRONMENT="dev"
 readonly port=80
 readonly ENV_PARAM_NAME="/config/app/env"
 readonly DB_PASSWORD_PARAM_NAME="/config/app/db_password"
-vpc_id=$(aws ec2 describe-vpcs --filter "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
+
+vpc_id=$(aws ec2 describe-vpcs --filters "Name=tag:Project,Values=proj01" --query "Vpcs[0].VpcId" --output text)
+if [[ -z "$vpc_id" || "$vpc_id" == "None" ]]
+then
+	exit 1
+fi
+
 private_sub_id_one=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=Private-Subnet-AZ1" --query "Subnets[0].SubnetId" --output text)
 private_sub_id_two=$(aws ec2 describe-subnets --filters "Name=tag:Name,Values=Private-Subnet-AZ2" --query "Subnets[0].SubnetId" --output text)
-
 
 # log <message>: prints a formatted status line.
 log() {
@@ -150,7 +155,7 @@ else
 	log "Role '$ROLE_NAME' already attached to instance profile '$INSTANCE_PROFILE_NAME'"
 fi
 
-SG_id=$(aws ec2 describe-security-groups --filter "Name=tag:Name,Values=My Security Group" --query SecurityGroups[0].GroupId --output text)
+SG_id=$(aws ec2 describe-security-groups --filters "Name=tag:Name,Values=My Security Group" --query SecurityGroups[0].GroupId --output text)
 if [[ -z "$SG_id" || "$SG_id" == "None" ]]
 then
 	log "Creating security group"
