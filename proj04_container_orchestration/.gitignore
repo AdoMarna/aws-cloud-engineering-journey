@@ -1,0 +1,3 @@
+*.txt
+templates/task_definition_api.json
+templates/task_definition.json

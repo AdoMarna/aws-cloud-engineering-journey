@@ -1,0 +1,22 @@
+# syntax=docker/dockerfile:1
+
+# ---- Stage 1: builder — no external deps, kept for structure/future deps ----
+FROM node:20-alpine AS builder
+
+WORKDIR /build
+COPY api/server.js .
+
+# ---- Stage 2: runtime — minimal image, non-root user ----
+FROM node:20-alpine AS runtime
+
+# Non-root user/group to run the app (no shell, no home dir needed)
+RUN addgroup -S app && adduser -S -G app -H app
+
+COPY --from=builder /build/server.js /app/server.js
+
+WORKDIR /app
+USER app
+
+EXPOSE 8080
+
+CMD ["node", "server.js"]

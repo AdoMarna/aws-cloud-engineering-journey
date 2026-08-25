@@ -271,5 +271,5 @@ then
 	aws ec2 create-vpc-endpoint --vpc-id "$vpc_id" --service-name com.amazonaws.eu-west-3.s3 --route-table-ids "$private_route_table_id" "$private_route_table_id_two" --tag-specifications 'ResourceType=vpc-endpoint,Tags=[{Key=Name,Value=VPC Endpoint},{Key=Project,Value=proj01}]' >/dev/null
 	vpc_endpoint_id=$(wait_until_visible "the vpc endpoint" 'aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=VPC Endpoint" --query "VpcEndpoints[0].VpcEndpointId" --output text')
 else
-	printf "==> The vpc endpoint already exists, continuing..."
+	printf "==> The vpc endpoint already exists, continuing...\n"
 fi

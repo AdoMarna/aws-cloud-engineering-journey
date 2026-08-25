@@ -152,7 +152,7 @@ then
 		--name my-load-balancer \
 		--type application \
 		--subnets "$subnet_pub_one" "$subnet_pub_two" \
-		--security-groups "$SG_App_id" \
+		--security-groups "$SG_ALB_id" \
 		--tags Key=Name,Value=my_load_balancer Key=Project,Value=proj03 Key=Environment,Value=dev \
 		--query LoadBalancers[0].LoadBalancerArn \
 		--output text)
