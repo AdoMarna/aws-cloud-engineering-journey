@@ -3,16 +3,16 @@
   "runtimePlatform": {
     "operatingSystemFamily": "LINUX"
   },
-  "executionRoleArn": "arn:aws:iam::222971669042:role/ecsTaskExecutionRole",
+  "executionRoleArn": "",
   "networkMode": "awsvpc",
   "containerDefinitions": [
     {
-      "name": "my-app",
-      "image": "222971669042.dkr.ecr.eu-west-3.amazonaws.com/proj04-app:v2",
+      "name": "",
+      "image": "",
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {
-          "awslogs-group": "/ecs/proj04-app",
+          "awslogs-group": "/ecs/proj04",
           "awslogs-region": "eu-west-3",
           "awslogs-stream-prefix": "ecs"
         }
