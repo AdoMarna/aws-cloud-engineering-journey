@@ -3,8 +3,7 @@
 set -euo pipefail
 
 readonly REGION="${AWS_REGION:-eu-west-3}"
-readonly BUCKET_NAME="shinado-proj05-private-bucket"
-readonly TABLE_NAME="shinado-proj05-table"
+readonly BUCKET_NAME="proj06-bucket"
 
 log() {
 	printf "==> %s\n" "$1"
@@ -16,8 +15,10 @@ fail() {
 }
 
 # ---------------------------------------------------------------------------
-# 1. S3 bucket: private, versioned, encrypted at rest (AES256)
+# S3 bucket: private, versioned, encrypted at rest (AES256)
 # ---------------------------------------------------------------------------
+# State locking uses Terraform's native S3 lockfile (use_lockfile = true in
+# backend.tf, Terraform >= 1.10) — no DynamoDB table is required.
 
 if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null
 then
@@ -57,27 +58,5 @@ aws s3api put-bucket-encryption \
 	--server-side-encryption-configuration \
 	'{"Rules":[{"ApplyServerSideEncryptionByDefault":{"SSEAlgorithm":"AES256"}}]}' \
 	>/dev/null
-
-# ---------------------------------------------------------------------------
-# 2. DynamoDB table: state locking (LockID primary key)
-# ---------------------------------------------------------------------------
-
-table_status=$(aws dynamodb describe-table --table-name "$TABLE_NAME" --query "Table.TableStatus" --output text 2>/dev/null || true)
-if [[ -n "$table_status" && "$table_status" != "None" ]]
-then
-	log "Lock table $TABLE_NAME already exists"
-else
-	log "Creating lock table $TABLE_NAME"
-	aws dynamodb create-table \
-		--table-name "$TABLE_NAME" \
-		--attribute-definitions AttributeName=LockID,AttributeType=S \
-		--key-schema AttributeName=LockID,KeyType=HASH \
-		--billing-mode PAY_PER_REQUEST \
-		--tags Key=Project,Value=proj05 \
-		>/dev/null
-	log "Waiting for lock table to become active..."
-	aws dynamodb wait table-exists --table-name "$TABLE_NAME"
-	log "Lock table active"
-fi
 
 log "Backend bootstrap complete, ready for: terraform init"

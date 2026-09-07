@@ -1,0 +1,14 @@
+*.txt
+
+# Terraform local working files (never committed: state lives in the S3 backend)
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+*.tfvars.json
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

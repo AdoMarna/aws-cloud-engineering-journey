@@ -2,6 +2,10 @@
 
 set -euo pipefail
 
+readonly REGION="${AWS_REGION:-eu-west-3}"
+readonly AZ1="${REGION}a"
+readonly AZ2="${REGION}b"
+
 # Waits for a freshly created resource to become visible via describe (works around
 # EC2 API eventual consistency right after a create-*).
 wait_until_visible() {
@@ -35,12 +39,12 @@ fi
 
 # name -> "cidr,az"
 declare -A subnets=(
-	[Public-Subnet-AZ1]="10.0.1.0/24,eu-west-3a"
-	[Public-Subnet-AZ2]="10.0.2.0/24,eu-west-3b"
-	[Private-Subnet-AZ1]="10.0.10.0/24,eu-west-3a"
-	[Private-Subnet-AZ2]="10.0.20.0/24,eu-west-3b"
-	[Isolated-Subnet-AZ1]="10.0.100.0/24,eu-west-3a"
-	[Isolated-Subnet-AZ2]="10.0.200.0/24,eu-west-3b"
+	[Public-Subnet-AZ1]="10.0.1.0/24,$AZ1"
+	[Public-Subnet-AZ2]="10.0.2.0/24,$AZ2"
+	[Private-Subnet-AZ1]="10.0.10.0/24,$AZ1"
+	[Private-Subnet-AZ2]="10.0.20.0/24,$AZ2"
+	[Isolated-Subnet-AZ1]="10.0.100.0/24,$AZ1"
+	[Isolated-Subnet-AZ2]="10.0.200.0/24,$AZ2"
 )
 
 subnet_order=(
@@ -268,7 +272,7 @@ vpc_endpoint_id=$(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values
 if [[ -z "$vpc_endpoint_id" || "$vpc_endpoint_id" == "None" ]]
 then
 	printf "==> Creating the vpc endpoint\n"
-	aws ec2 create-vpc-endpoint --vpc-id "$vpc_id" --service-name com.amazonaws.eu-west-3.s3 --route-table-ids "$private_route_table_id" "$private_route_table_id_two" --tag-specifications 'ResourceType=vpc-endpoint,Tags=[{Key=Name,Value=VPC Endpoint},{Key=Project,Value=proj01}]' >/dev/null
+	aws ec2 create-vpc-endpoint --vpc-id "$vpc_id" --service-name "com.amazonaws.${REGION}.s3" --route-table-ids "$private_route_table_id" "$private_route_table_id_two" --tag-specifications 'ResourceType=vpc-endpoint,Tags=[{Key=Name,Value=VPC Endpoint},{Key=Project,Value=proj01}]' >/dev/null
 	vpc_endpoint_id=$(wait_until_visible "the vpc endpoint" 'aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=VPC Endpoint" --query "VpcEndpoints[0].VpcEndpointId" --output text')
 else
 	printf "==> The vpc endpoint already exists, continuing...\n"

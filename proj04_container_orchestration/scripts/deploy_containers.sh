@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+readonly REGION="${AWS_REGION:-eu-west-3}"
 readonly ROLE_NAME="ecsTaskExecutionRole"
 readonly POLICY_ARN="arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 readonly LOG_GROUP_NAME_APP="/ecs/proj04-app"
@@ -36,8 +37,8 @@ jq_field() {
 }
 
 aws_id=$(aws sts get-caller-identity --query Account --output text)
-ecr_uri_app="$aws_id.dkr.ecr.eu-west-3.amazonaws.com/proj04-app"
-ecr_uri_api="$aws_id.dkr.ecr.eu-west-3.amazonaws.com/proj04-api"
+ecr_uri_app="$aws_id.dkr.ecr.$REGION.amazonaws.com/proj04-app"
+ecr_uri_api="$aws_id.dkr.ecr.$REGION.amazonaws.com/proj04-api"
 image_app="$ecr_uri_app:local"
 image_api="$ecr_uri_api:local"
 register_id=$(aws ecr describe-repositories \

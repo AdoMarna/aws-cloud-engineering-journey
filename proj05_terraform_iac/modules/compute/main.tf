@@ -133,7 +133,7 @@ resource "aws_ecs_task_definition" "app" {
 
         options = {
           awslogs-group         = aws_cloudwatch_log_group.ecs.name
-          awslogs-region        = "eu-west-3"
+          awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
       }

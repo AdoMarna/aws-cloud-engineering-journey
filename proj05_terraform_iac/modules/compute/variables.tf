@@ -1,3 +1,8 @@
+variable "aws_region" {
+  type        = string
+  description = "AWS region the stack is deployed into (used for the CloudWatch Logs configuration)."
+}
+
 variable "vpc_id" {
   type        = string
   description = "ID of the VPC the ALB and target group are attached to."

@@ -19,9 +19,11 @@ This repository follows strict engineering and operational standards:
 ## 🛠️ Tech Stack & Tooling
 
 * **Cloud Provider:** Amazon Web Services (AWS)
-* **Compute & Orchestration:** EC2, Auto Scaling Groups (ASG), Launch Templates, Systems Manager (SSM)
+* **Compute & Orchestration:** EC2, Auto Scaling Groups (ASG), Launch Templates, Systems Manager (SSM), ECS Fargate
+* **Serverless & Events:** API Gateway (HTTP API v2), AWS Lambda, DynamoDB, SQS + DLQ, EventBridge
 * **Networking & Traffic:** VPC, Multi-AZ Subnetting, Route Tables, NAT Gateways, ALB (Application Load Balancer)
 * **Identity & Security:** IAM (RBAC, AssumeRole via STS), KMS, Security Groups, NACLs, IMDSv2
+* **Infrastructure as Code:** Terraform (modular architecture, S3 remote state, state locking, Workspaces)
 * **Automation & Scripting:** Bash, GNU Make, AWS CLI v2, `jq`
 
 ---
@@ -33,31 +35,42 @@ This repository follows strict engineering and operational standards:
 | **[`proj00_iam_baseline`](./proj00_iam_baseline)** | Identity & Security | RBAC, Least Privilege, Temporary Credentials via STS, CLI Automation | `125% Completed` |
 | **[`proj01_custom_vpc`](./proj01_custom_vpc)** | Network Engineering | Custom Multi-AZ VPC, Public/Private/Isolated Subnets, NAT GW, NACLs | `125% Completed` |
 | **[`proj02_secure_compute`](./proj02_secure_compute)** | Compute & Hardening | Private EC2, Zero-SSH (SSM Manager), IMDSv2, KMS Parameter Store Injection | `125% Completed` |
-| **[`proj03_ha_auto_scaling`](./proj03_ha_auto_scaling)** | High Availability | Application Load Balancer (ALB), Auto Scaling Groups (ASG), Self-Healing | 🟡 *In Progress* |
-| **`proj04_container_orchestration`** | Containers | Docker, ECR, AWS ECS Fargate / EKS Microservices Deployment | 🔴 *Planned* |
-| **`proj05_infrastructure_as_code`** | IaC & State | Terraform Modular Architecture, Remote State S3/DynamoDB | 🔴 *Planned* |
-| **`proj06_serverless_architecture`** | Serverless | API Gateway, AWS Lambda, DynamoDB, EventBridge Event-Driven Architecture | 🔴 *Planned* |
+| **[`proj03_ha_auto_scaling`](./proj03_ha_auto_scaling)** | High Availability | Application Load Balancer (ALB), Auto Scaling Groups (ASG), Self-Healing | `125% Completed` |
+| **[`proj04_container_orchestration`](./proj04_container_orchestration)** | Containers | Docker, ECR, ECS Fargate Microservices, ALB Path-Based Routing, Autoscaling | `125% Completed` |
+| **[`proj05_terraform_iac`](./proj05_terraform_iac)** | IaC & State | Terraform Modular Architecture, Remote State S3 + DynamoDB Locking, Workspaces | `125% Completed` |
+| **[`proj06_serverless_event_driven`](./proj06_serverless_event_driven)** | Serverless | API Gateway, AWS Lambda, DynamoDB, SQS + DLQ, EventBridge Event-Driven Pipeline | `125% Completed` |
 
 ---
 
 ## 🚀 Quickstart & Workflow Example
 
-All projects are fully orchestrated via `Makefile` interfaces. 
+All projects are fully orchestrated via `Makefile` interfaces, but the
+target names differ between the two project families in this repo:
 
-```bash
-# Clone the repository
-git clone https://github.com/<your-username>/aws-cloud-engineering-journey.git
-cd aws-cloud-engineering-journey/proj02_secure_compute
+* **`proj00`–`proj04`** are pure AWS CLI v2 + Bash, idempotent by design:
 
-# Deploy the full stack (see each project's README for prerequisites)
-make deploy
+  ```bash
+  git clone https://github.com/<your-username>/aws-cloud-engineering-journey.git
+  cd aws-cloud-engineering-journey/proj02_secure_compute
 
-# Run project-specific health checks
-make check
+  make deploy   # Deploy the full stack
+  make check    # Run project-specific health checks
+  make clean    # Teardown all resources (FinOps zero-leak check)
+  ```
 
-# Teardown all resources (FinOps zero-leak check)
-make clean
-```
+* **`proj05`–`proj06`** are Terraform-driven, with a remote S3 backend
+  bootstrapped once via [`bootstrap/bootstrap.sh`](./bootstrap/bootstrap.sh):
+
+  ```bash
+  cd aws-cloud-engineering-journey/proj06_serverless_event_driven
+
+  make bootstrap   # Provision the S3 remote state backend (once)
+  make init        # terraform init
+  make plan        # terraform plan (ENV=dev by default, ENV=prod supported)
+  make apply       # terraform apply
+  make test        # Run the project's end-to-end smoke test
+  make clean       # terraform destroy + full resource cleanup
+  ```
 
 Each project directory ships its own `README.md` with the detailed
 architecture, prerequisites, and full `make` target reference — start
@@ -69,9 +82,16 @@ there before running anything.
 
 * Every project is self-contained: its own `Makefile`, `scripts/`,
   `README.md`, and (when relevant) `templates/`/`configs/`.
-* Every AWS resource is tagged `Project=<projXX>` + `Environment=dev`,
+* Every AWS resource is tagged `Project=<projXX>` + `Environment=<dev|prod>`,
   used both for idempotent lookups and for `make clean` teardown —
   nothing is ever identified by a hardcoded ID.
-* Later projects consume earlier ones by tag lookup (e.g. `proj02` reads
-  `proj01`'s VPC/subnets) rather than duplicating infrastructure —
-  deploy in numeric order.
+* No hardcoded AWS region: CLI/Bash projects read `${AWS_REGION:-eu-west-3}`,
+  Terraform projects expose a `var.aws_region` (default `eu-west-3`) — override
+  either to redeploy into a different region.
+* **`proj00`–`proj04`** (CLI/Bash): later projects consume earlier ones by tag
+  lookup (e.g. `proj02` reads `proj01`'s VPC/subnets) rather than duplicating
+  infrastructure — deploy in numeric order.
+* **`proj05`–`proj06`** (Terraform): each project is a fully independent,
+  modular stack with its own S3 remote state backend and state locking — no
+  cross-project tag lookups; state locking cannot use a variable region since
+  Terraform evaluates `backend` blocks before variables are resolved.

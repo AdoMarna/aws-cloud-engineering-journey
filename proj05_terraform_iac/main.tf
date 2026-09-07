@@ -13,7 +13,7 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-3"
+  region = var.aws_region
 }
 
 data "aws_ecr_authorization_token" "ecr" {}
@@ -31,6 +31,7 @@ provider "docker" {
 module "vpc" {
   source = "./modules/vpc"
 
+  aws_region        = var.aws_region
   vpc_cidr          = var.vpc_cidr
   pub_sub_one_cidr  = var.pub_sub_one_cidr
   pub_sub_two_cidr  = var.pub_sub_two_cidr
@@ -61,6 +62,7 @@ module "compute" {
     docker = docker
   }
 
+  aws_region            = var.aws_region
   vpc_id                = module.vpc.vpc_id
   public_subnet_az1_id  = module.vpc.public_subnet_az1_id
   public_subnet_az2_id  = module.vpc.public_subnet_az2_id

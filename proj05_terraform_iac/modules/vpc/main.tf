@@ -1,4 +1,8 @@
 # vpc
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
 }
@@ -7,7 +11,7 @@ resource "aws_vpc" "main" {
 resource "aws_subnet" "public_subnet_az1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.pub_sub_one_cidr
-  availability_zone = "eu-west-3a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
     Name        = "Public-Subnet-AZ1-${terraform.workspace}"
@@ -19,7 +23,7 @@ resource "aws_subnet" "public_subnet_az1" {
 resource "aws_subnet" "public_subnet_az2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.pub_sub_two_cidr
-  availability_zone = "eu-west-3b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
     Name        = "Public-Subnet-AZ2-${terraform.workspace}"
@@ -32,7 +36,7 @@ resource "aws_subnet" "public_subnet_az2" {
 resource "aws_subnet" "private_subnet_az1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.priv_sub_one_cidr
-  availability_zone = "eu-west-3a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
     Name        = "Private-Subnet-AZ1-${terraform.workspace}"
@@ -44,7 +48,7 @@ resource "aws_subnet" "private_subnet_az1" {
 resource "aws_subnet" "private_subnet_az2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.priv_sub_two_cidr
-  availability_zone = "eu-west-3b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
     Name        = "Private-Subnet-AZ2-${terraform.workspace}"
@@ -57,7 +61,7 @@ resource "aws_subnet" "private_subnet_az2" {
 resource "aws_subnet" "isolated_subnet_az1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.iso_sub_one_cidr
-  availability_zone = "eu-west-3a"
+  availability_zone = data.aws_availability_zones.available.names[0]
 
   tags = {
     Name        = "Isolated-Subnet-AZ1-${terraform.workspace}"
@@ -69,7 +73,7 @@ resource "aws_subnet" "isolated_subnet_az1" {
 resource "aws_subnet" "isolated_subnet_az2" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = var.iso_sub_two_cidr
-  availability_zone = "eu-west-3b"
+  availability_zone = data.aws_availability_zones.available.names[1]
 
   tags = {
     Name        = "Isolated-Subnet-AZ2-${terraform.workspace}"

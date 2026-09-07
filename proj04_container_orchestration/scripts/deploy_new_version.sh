@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+readonly REGION="${AWS_REGION:-eu-west-3}"
+
 log() {
 	printf "==> %s\n" "$1"
 }
@@ -11,7 +13,7 @@ fail() {
 	exit 1
 }
 aws_id=$(aws sts get-caller-identity --query Account --output text)
-ecr_uri_app="$aws_id.dkr.ecr.eu-west-3.amazonaws.com/proj04-app"
+ecr_uri_app="$aws_id.dkr.ecr.$REGION.amazonaws.com/proj04-app"
 image_app="$ecr_uri_app:v2"
 
 log "Building the app image"

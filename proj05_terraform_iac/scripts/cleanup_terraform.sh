@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-readonly REGION="eu-west-3"
+readonly REGION="${AWS_REGION:-eu-west-3}"
 readonly BUCKET_NAME="shinado-proj05-private-bucket"
 readonly TABLE_NAME="shinado-proj05-table"
 readonly WORKSPACE="${TF_WORKSPACE:-dev}"

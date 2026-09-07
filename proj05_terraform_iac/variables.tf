@@ -1,3 +1,14 @@
+variable "aws_region" {
+  type        = string
+  description = "AWS region to deploy the stack into."
+  default     = "eu-west-3"
+
+  validation {
+    condition     = can(regex("^[a-z]{2}-[a-z]+-[0-9]$", var.aws_region))
+    error_message = "aws_region must be a valid AWS region identifier (e.g. eu-west-3)."
+  }
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "Primary IPv4 CIDR block for the VPC (e.g. 10.0.0.0/16)."

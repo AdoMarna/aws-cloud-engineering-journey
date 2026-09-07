@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+readonly REGION="${AWS_REGION:-eu-west-3}"
+
 if_program_exist()
 {
 	local my_command
@@ -166,7 +168,7 @@ else
 	    --profile "$profile_name"
 
 	aws configure set region \
-	    eu-west-3 \
+	    "$REGION" \
 	    --profile "$profile_name"
 
 	printf "==> Waiting for IAM propagation of the new access key\n"

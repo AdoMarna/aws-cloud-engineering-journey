@@ -1,3 +1,8 @@
+variable "aws_region" {
+  type        = string
+  description = "AWS region the VPC and its subnets are deployed into."
+}
+
 variable "vpc_cidr" {
   type        = string
   description = "Primary IPv4 CIDR block for the VPC (e.g. 10.0.0.0/16)."
