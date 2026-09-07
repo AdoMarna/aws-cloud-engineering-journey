@@ -1,0 +1,8 @@
+vpc_cidr          = "10.1.0.0/16"
+pub_sub_one_cidr  = "10.1.1.0/24"
+pub_sub_two_cidr  = "10.1.2.0/24"
+priv_sub_one_cidr = "10.1.10.0/24"
+priv_sub_two_cidr = "10.1.20.0/24"
+iso_sub_one_cidr  = "10.1.100.0/24"
+iso_sub_two_cidr  = "10.1.200.0/24"
+pub_route_cidr    = "0.0.0.0/0"
