@@ -141,7 +141,7 @@ curl -s -X POST "${api_endpoint}/orders" \
 
 * Every Shell script starts with `set -euo pipefail` and is idempotent (safe to re-run).
 * **Pure HCL / No CLI Creation**: 100% of the AWS infrastructure is declared in Terraform HCL. No resource is created manually or via `aws-cli`, aside from the one-time backend bootstrap.
-* **Least-Privilege IAM**: each Lambda has its own dedicated IAM role. Ingest can only `sqs:SendMessage`; processor can only `dynamodb:PutItem` and `events:PutEvents`; notifier has no permissions beyond CloudWatch Logs.
+* **Least-Privilege IAM**: each Lambda has its own dedicated IAM role. Ingest can only `sqs:SendMessage`; processor can only consume the orders queue (`sqs:ReceiveMessage`, `DeleteMessage`, `ChangeMessageVisibility`, `GetQueueAttributes`), `dynamodb:PutItem` and `events:PutEvents`; notifier has no permissions beyond CloudWatch Logs.
 * **Zero Hardcoded Config**: queue URLs, table names, and event bus names are injected into Lambdas exclusively through Terraform-managed environment variables.
 * **Automated Packaging**: each Lambda's `src/` directory is zipped on the fly by Terraform's `archive_file` data source — no manual build step.
 * **Dynamic Environment Tagging & Naming**: the `environment` variable (`dev`/`prod`) flows into every resource via the provider's `default_tags`, and into every resource name via the `proj06-<env>` prefix.
