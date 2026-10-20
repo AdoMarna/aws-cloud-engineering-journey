@@ -4,11 +4,13 @@ set -euo pipefail
 
 readonly REGION="${AWS_REGION:-eu-west-3}"
 readonly PROJECT="proj06"
-readonly API_NAME="serverless_lambda_gw"
-readonly TABLE_NAME="orders-table"
-readonly QUEUE_NAME="orders"
-readonly DLQ_NAME="orders-dlq"
-readonly NOTIFIER_FUNCTION="notifier_lambda_function"
+readonly ENVIRONMENT="${ENV:-dev}"
+readonly PREFIX="${PROJECT}-${ENVIRONMENT}"
+readonly API_NAME="${PREFIX}-http-api"
+readonly TABLE_NAME="${PREFIX}-orders"
+readonly QUEUE_NAME="${PREFIX}-orders"
+readonly DLQ_NAME="${PREFIX}-orders-dlq"
+readonly NOTIFIER_FUNCTION="${PREFIX}-notifier"
 readonly NOTIFIER_LOG_GROUP="/aws/lambda/${NOTIFIER_FUNCTION}"
 readonly max_attempts=20
 readonly poll_interval=5

@@ -4,15 +4,17 @@ set -euo pipefail
 
 readonly REGION="${AWS_REGION:-eu-west-3}"
 readonly PROJECT="proj06"
-readonly API_NAME="serverless_lambda_gw"
-readonly TABLE_NAME="orders-table"
-readonly QUEUE_NAME="orders"
-readonly DLQ_NAME="orders-dlq"
-readonly EVENT_BUS_NAME="orders-event-bus"
-readonly EVENT_RULE_NAME="order-processed-rule"
-readonly INGEST_FUNCTION="ingestion_lambda_function"
-readonly PROCESSOR_FUNCTION="processor_lambda_function"
-readonly NOTIFIER_FUNCTION="notifier_lambda_function"
+readonly ENVIRONMENT="${ENV:-dev}"
+readonly PREFIX="${PROJECT}-${ENVIRONMENT}"
+readonly API_NAME="${PREFIX}-http-api"
+readonly TABLE_NAME="${PREFIX}-orders"
+readonly QUEUE_NAME="${PREFIX}-orders"
+readonly DLQ_NAME="${PREFIX}-orders-dlq"
+readonly EVENT_BUS_NAME="${PREFIX}-orders-bus"
+readonly EVENT_RULE_NAME="${PREFIX}-order-processed"
+readonly INGEST_FUNCTION="${PREFIX}-ingest"
+readonly PROCESSOR_FUNCTION="${PREFIX}-processor"
+readonly NOTIFIER_FUNCTION="${PREFIX}-notifier"
 
 readonly -a LAMBDA_FUNCTIONS=(
 	"$INGEST_FUNCTION"
@@ -21,9 +23,9 @@ readonly -a LAMBDA_FUNCTIONS=(
 )
 
 readonly -a LAMBDA_ROLES=(
-	"proj06-lambda-ingestion-role"
-	"proj06-lambda-processor-role"
-	"proj06-lambda-notifier-role"
+	"${PREFIX}-ingest-role"
+	"${PREFIX}-processor-role"
+	"${PREFIX}-notifier-role"
 )
 
 readonly -a LOG_GROUPS=(

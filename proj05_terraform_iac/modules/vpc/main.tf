@@ -227,3 +227,14 @@ resource "aws_route_table_association" "iso_rt_assoc_az2" {
   subnet_id      = aws_subnet.isolated_subnet_az2.id
   route_table_id = aws_route_table.iso_route_table.id
 }
+# Lock down the VPC's default security group (no ingress, no egress) so that
+# any resource launched without an explicit SG gets no network access.
+resource "aws_default_security_group" "default" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name        = "default-deny-${terraform.workspace}"
+    Project     = "proj05"
+    Environment = terraform.workspace
+  }
+}

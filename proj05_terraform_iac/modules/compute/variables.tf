@@ -72,13 +72,3 @@ variable "sg_app_id" {
     error_message = "sg_app_id must be a valid security group ID (starting with \"sg-\")."
   }
 }
-
-variable "sg_db_id" {
-  type        = string
-  description = "ID of the security group attached to the database tier."
-
-  validation {
-    condition     = can(regex("^sg-", var.sg_db_id))
-    error_message = "sg_db_id must be a valid security group ID (starting with \"sg-\")."
-  }
-}

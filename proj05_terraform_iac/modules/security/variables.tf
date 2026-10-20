@@ -8,46 +8,6 @@ variable "vpc_id" {
   }
 }
 
-variable "public_subnet_az1_id" {
-  type        = string
-  description = "ID of the public subnet in the first availability zone."
-
-  validation {
-    condition     = can(regex("^subnet-", var.public_subnet_az1_id))
-    error_message = "public_subnet_az1_id must be a valid subnet ID (starting with \"subnet-\")."
-  }
-}
-
-variable "public_subnet_az2_id" {
-  type        = string
-  description = "ID of the public subnet in the second availability zone."
-
-  validation {
-    condition     = can(regex("^subnet-", var.public_subnet_az2_id))
-    error_message = "public_subnet_az2_id must be a valid subnet ID (starting with \"subnet-\")."
-  }
-}
-
-variable "private_subnet_az1_id" {
-  type        = string
-  description = "ID of the private subnet in the first availability zone."
-
-  validation {
-    condition     = can(regex("^subnet-", var.private_subnet_az1_id))
-    error_message = "private_subnet_az1_id must be a valid subnet ID (starting with \"subnet-\")."
-  }
-}
-
-variable "private_subnet_az2_id" {
-  type        = string
-  description = "ID of the private subnet in the second availability zone."
-
-  validation {
-    condition     = can(regex("^subnet-", var.private_subnet_az2_id))
-    error_message = "private_subnet_az2_id must be a valid subnet ID (starting with \"subnet-\")."
-  }
-}
-
 variable "isolated_subnet_az1_id" {
   type        = string
   description = "ID of the isolated subnet in the first availability zone."

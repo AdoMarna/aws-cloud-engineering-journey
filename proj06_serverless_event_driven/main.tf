@@ -1,4 +1,6 @@
 terraform {
+  required_version = ">= 1.10"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -18,8 +20,26 @@ provider "aws" {
   }
 }
 
+locals {
+  # Every resource name is prefixed so dev and prod can coexist in one account.
+  name_prefix = "proj06-${var.environment}"
+}
+
+# Each environment has its own state (S3 key "env:/<workspace>/..."). Refuse to
+# plan if the selected workspace doesn't match the tfvars being applied.
+resource "terraform_data" "workspace_guard" {
+  lifecycle {
+    precondition {
+      condition     = terraform.workspace == var.environment
+      error_message = "Workspace \"${terraform.workspace}\" does not match environment \"${var.environment}\". Run: terraform workspace select -or-create ${var.environment}"
+    }
+  }
+}
+
 module "api_gateway" {
   source = "./modules/api_gateway"
+
+  name_prefix = local.name_prefix
 
   lambda_ingestion_arn  = module.lambda.lambda_ingestion_arn
   lambda_ingestion_name = module.lambda.lambda_ingestion_name
@@ -27,18 +47,26 @@ module "api_gateway" {
 
 module "sqs" {
   source = "./modules/sqs"
+
+  name_prefix = local.name_prefix
 }
 
 module "dynamodb" {
   source = "./modules/dynamodb"
+
+  name_prefix = local.name_prefix
 }
 
 module "eventbridge" {
   source = "./modules/eventbridge"
+
+  name_prefix = local.name_prefix
 }
 
 module "lambda" {
   source = "./modules/lambda"
+
+  name_prefix = local.name_prefix
 
   sqs_arn = module.sqs.sqs_arn
   sqs_url = module.sqs.sqs_url
@@ -51,7 +79,7 @@ module "lambda" {
 }
 
 resource "aws_cloudwatch_event_rule" "order_processed" {
-  name           = "order-processed-rule"
+  name           = "${local.name_prefix}-order-processed"
   event_bus_name = module.eventbridge.event_bus_name
 
   event_pattern = jsonencode({

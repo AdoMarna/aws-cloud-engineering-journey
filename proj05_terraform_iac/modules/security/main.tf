@@ -13,6 +13,7 @@ resource "aws_security_group" "sg_alb" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_sg_alb_one" {
   security_group_id = aws_security_group.sg_alb.id
+  description       = "HTTP from the Internet to the public ALB"
   cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
   ip_protocol       = "tcp"
@@ -21,6 +22,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_sg_alb_one" {
 
 resource "aws_vpc_security_group_egress_rule" "sg_alb_to_app_http" {
   security_group_id            = aws_security_group.sg_alb.id
+  description                  = "ALB to application tasks on 8080"
   referenced_security_group_id = aws_security_group.sg_app.id
   ip_protocol                  = "tcp"
   from_port                    = 8080
@@ -42,6 +44,7 @@ resource "aws_security_group" "sg_app" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_app_one" {
   security_group_id            = aws_security_group.sg_app.id
+  description                  = "Application port 8080 from the ALB only"
   from_port                    = 8080
   ip_protocol                  = "tcp"
   to_port                      = 8080
@@ -50,6 +53,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_app_one" {
 
 resource "aws_vpc_security_group_egress_rule" "sg_app_to_db" {
   security_group_id            = aws_security_group.sg_app.id
+  description                  = "Application to PostgreSQL in the DB tier"
   referenced_security_group_id = aws_security_group.sg_db.id
   ip_protocol                  = "tcp"
   from_port                    = 5432
@@ -58,6 +62,7 @@ resource "aws_vpc_security_group_egress_rule" "sg_app_to_db" {
 
 resource "aws_vpc_security_group_egress_rule" "sg_app_to_https" {
   security_group_id = aws_security_group.sg_app.id
+  description       = "HTTPS egress (ECR pulls, AWS APIs via NAT)"
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "tcp"
   from_port         = 443
@@ -79,6 +84,7 @@ resource "aws_security_group" "sg_db" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_app_only" {
   security_group_id            = aws_security_group.sg_db.id
+  description                  = "PostgreSQL from the application tier only"
   from_port                    = 5432
   ip_protocol                  = "tcp"
   to_port                      = 5432

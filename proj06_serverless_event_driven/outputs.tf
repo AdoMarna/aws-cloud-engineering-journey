@@ -20,5 +20,5 @@ output "event_bus_name" {
 
 output "backend_state" {
   description = "Location of the remote Terraform state (S3 bucket/key) used for this deployment."
-  value       = "s3://proj06-bucket/proj06/terraform.tfstate"
+  value       = "s3://proj06-bucket/env:/${terraform.workspace}/proj06/terraform.tfstate"
 }

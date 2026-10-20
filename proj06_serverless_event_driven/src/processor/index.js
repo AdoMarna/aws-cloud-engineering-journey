@@ -23,6 +23,10 @@ exports.handler = async (event) => {
 
   console.log(`Processing ${event.Records?.length || 0} SQS messages`);
 
+  // Partial batch response (ReportBatchItemFailures): only the failed
+  // messages go back to the queue, successful ones are deleted.
+  const batchItemFailures = [];
+
   for (const record of event.Records || []) {
     try {
       await processRecord(record);
@@ -31,11 +35,15 @@ exports.handler = async (event) => {
         messageId: record.messageId,
         error: error.message,
       });
-      throw error;
+      batchItemFailures.push({ itemIdentifier: record.messageId });
     }
   }
 
-  console.log("SQS batch processed successfully");
+  console.log(
+    `SQS batch processed: ${batchItemFailures.length} failure(s)`
+  );
+
+  return { batchItemFailures };
 };
 
 async function processRecord(record) {

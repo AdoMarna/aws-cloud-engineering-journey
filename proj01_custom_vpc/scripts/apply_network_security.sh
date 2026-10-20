@@ -19,7 +19,7 @@ else
 	printf "==> SG-ALB already created, continuing...\n"
 fi
 
-SG_ALB_rules_id=$(aws ec2 describe-security-group-rules --filters Name="group-id",Values="$SG_ALB_id" Name="tag:Name",Values="First Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
+SG_ALB_rules_id=$(aws ec2 describe-security-group-rules --filters "Name=group-id,Values=$SG_ALB_id" "Name=tag:Name,Values=First Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
 if [[ "$SG_ALB_id" != "$SG_ALB_rules_id" ]]
 then
 	printf "==> Creating SG-ALB security rules\n"
@@ -40,7 +40,7 @@ else
 	printf "==> SG-App already created, continuing...\n"
 fi
 
-SG_App_rules_id=$(aws ec2 describe-security-group-rules --filters Name="group-id",Values="$SG_App_id" Name="tag:Name",Values="Second Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
+SG_App_rules_id=$(aws ec2 describe-security-group-rules --filters "Name=group-id,Values=$SG_App_id" "Name=tag:Name,Values=Second Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
 if [[ "$SG_App_id" != "$SG_App_rules_id" ]]
 then
 	printf "==> Creating SG-App security rules\n"
@@ -61,7 +61,7 @@ else
 	printf "==> SG-DB already created, continuing...\n"
 fi
 
-SG_DB_rules_id=$(aws ec2 describe-security-group-rules --filters Name="group-id",Values="$SG_DB_id" Name="tag:Name",Values="Third Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
+SG_DB_rules_id=$(aws ec2 describe-security-group-rules --filters "Name=group-id,Values=$SG_DB_id" "Name=tag:Name,Values=Third Security Group Rules" --query SecurityGroupRules[0].GroupId --output text)
 if [[ "$SG_DB_id" != "$SG_DB_rules_id" ]]
 then
 	printf "==> Creating SG-DB security rules\n"

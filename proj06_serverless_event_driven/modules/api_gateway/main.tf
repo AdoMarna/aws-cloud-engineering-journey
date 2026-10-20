@@ -1,5 +1,5 @@
 resource "aws_apigatewayv2_api" "lambda" {
-  name          = "serverless_lambda_gw"
+  name          = "${var.name_prefix}-http-api"
   protocol_type = "HTTP"
 }
 

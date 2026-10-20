@@ -27,7 +27,8 @@ resource "docker_registry_image" "app" {
 }
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name = "/ecs/proj05-app-${terraform.workspace}"
+  name              = "/ecs/proj05-app-${terraform.workspace}"
+  retention_in_days = 30
 
   tags = {
     Project     = "proj05"

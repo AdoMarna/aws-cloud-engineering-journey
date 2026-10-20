@@ -23,7 +23,7 @@ A fully serverless, event-driven order pipeline provisioned end-to-end with **Te
                             │    Amazon SQS Queue    │ (Buffer & Resilience)
                             │  + Dead-Letter Queue   │ (DLQ, maxReceiveCount=3)
                             └────────────┬───────────┘
-                                         │ Event Source Mapping (batch=5)
+                                         │ Event Source Mapping (batch=5, partial batch failures)
                                          ▼
                             ┌────────────────────────┐
                             │  AWS Lambda (Processor)│ (Business Logic)
@@ -92,7 +92,7 @@ The S3 backend bucket itself is bootstrapped separately by [`../bootstrap/bootst
 
 * `terraform` (v1.10+, for native S3 state locking via `use_lockfile`), `aws-cli v2`, `jq`, `curl`, `bash`.
 * AWS CLI configured with valid administrator/provisioning permissions.
-* Node.js Lambda runtimes (`nodejs22.x`) — the AWS SDK v3 clients used in `src/` ship with the Lambda runtime, no `node_modules` to package.
+* Node.js Lambda runtimes (`nodejs24.x`) — the AWS SDK v3 clients used in `src/` ship with the Lambda runtime, no `node_modules` to package.
 
 ## Usage
 
@@ -109,7 +109,17 @@ make help        # Display target help
 # Target a specific environment
 make plan ENV=prod
 make apply ENV=prod
+make test ENV=prod
+make clean ENV=prod
 ```
+
+### Multi-environment isolation
+
+`dev` and `prod` can run side by side in the same AWS account:
+
+* **Separate state** — `plan`/`apply`/`destroy` first run `terraform workspace select -or-create $(ENV)`, so each environment gets its own state file (`s3://proj06-bucket/env:/<env>/proj06/terraform.tfstate`).
+* **Separate names** — every resource is prefixed with `proj06-<env>-` (e.g. `proj06-prod-processor`, `proj06-dev-orders-dlq`), so the two stacks never collide.
+* **Mismatch guard** — a `terraform_data` precondition fails the plan if the selected workspace differs from the `environment` in the tfvars, preventing a `prod.tfvars` apply against the `dev` state.
 
 ### Verifying the pipeline manually
 
@@ -134,7 +144,8 @@ curl -s -X POST "${api_endpoint}/orders" \
 * **Least-Privilege IAM**: each Lambda has its own dedicated IAM role. Ingest can only `sqs:SendMessage`; processor can only `dynamodb:PutItem` and `events:PutEvents`; notifier has no permissions beyond CloudWatch Logs.
 * **Zero Hardcoded Config**: queue URLs, table names, and event bus names are injected into Lambdas exclusively through Terraform-managed environment variables.
 * **Automated Packaging**: each Lambda's `src/` directory is zipped on the fly by Terraform's `archive_file` data source — no manual build step.
-* **Dynamic Environment Tagging**: the `environment` variable (`dev`/`prod`) flows into every resource via the provider's `default_tags`.
+* **Dynamic Environment Tagging & Naming**: the `environment` variable (`dev`/`prod`) flows into every resource via the provider's `default_tags`, and into every resource name via the `proj06-<env>` prefix.
+* **Managed Log Groups**: each Lambda's log group is declared (30-day retention) *before* the function, so Lambda never auto-creates one with infinite retention outside of Terraform.
 
 ## Scripts
 
@@ -155,6 +166,8 @@ Idempotent teardown, in dependency order: event source mapping → EventBridge t
 
 * **Least-Privilege IAM**: no Lambda role uses managed policies beyond `AWSLambdaBasicExecutionRole`; every other permission is a scoped inline policy against a single resource ARN.
 * **Asynchronous Decoupling**: the ingest Lambda never talks to DynamoDB or EventBridge directly — it only enqueues to SQS, so a downstream outage never blocks client-facing HTTP responses.
-* **Dead-Letter Isolation**: messages that fail processing 3 times land in `orders-dlq` instead of blocking or looping the main queue.
+* **Dead-Letter Isolation**: messages that fail processing 3 times land in `proj06-<env>-orders-dlq` instead of blocking or looping the main queue.
+* **Partial Batch Failures**: the event source mapping uses `ReportBatchItemFailures` — the processor returns only the failed message IDs, so one bad message never forces the whole batch of 5 to be reprocessed (no duplicate writes, no healthy messages pushed toward the DLQ).
+* **Encryption & Recovery at Rest**: both SQS queues use SSE-SQS (`sqs_managed_sse_enabled`), and the DynamoDB table has Point-In-Time Recovery enabled (35-day continuous backups).
 * **State File Encryption**: `terraform.tfstate` is encrypted at rest (`AES256`) and versioned on Amazon S3, locked natively via S3 conditional writes (`use_lockfile`).
 * **Zero Hardcoded Secrets**: no credentials, ARNs, or account IDs are hardcoded in `.tf` files — everything is passed via Terraform variables, module outputs, or Lambda environment variables.

@@ -11,7 +11,7 @@ fail() {
 	exit 1
 }
 
-instance_id=$(aws ec2 describe-instances --filters Name="tag:Project",Values="proj03" Name="instance-state-name",Values="pending,running" --query Reservations[0].Instances[0].InstanceId --output text)
+instance_id=$(aws ec2 describe-instances --filters "Name=tag:Project,Values=proj03" "Name=instance-state-name,Values=pending,running" --query Reservations[0].Instances[0].InstanceId --output text)
 
 command_id=$(aws ssm send-command \
     --document-name "AWS-RunShellScript" \
@@ -52,4 +52,4 @@ else
 fi
 
 # log "Instances running from asg:"
-# aws ec2 describe-instances --filters Name="Environment",Values="dev" Name="instance-state-name",Values="pending,running" --query Reservations[*].Instances[*].InstanceId --output text
+# aws ec2 describe-instances --filters "Name=Environment,Values=dev" "Name=instance-state-name,Values=pending,running" --query Reservations[*].Instances[*].InstanceId --output text
