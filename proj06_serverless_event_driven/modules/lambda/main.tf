@@ -1,3 +1,27 @@
+locals {
+  ingest_function_name    = "${var.name_prefix}-ingest"
+  processor_function_name = "${var.name_prefix}-processor"
+  notifier_function_name  = "${var.name_prefix}-notifier"
+}
+
+# Log groups are created before the functions: otherwise Lambda creates them
+# itself on first invocation, with infinite retention and outside of Terraform.
+resource "aws_cloudwatch_log_group" "ingest_logs" {
+  name              = "/aws/lambda/${local.ingest_function_name}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "processor_logs" {
+  name              = "/aws/lambda/${local.processor_function_name}"
+  retention_in_days = 30
+}
+
+resource "aws_cloudwatch_log_group" "notifier_logs" {
+  name              = "/aws/lambda/${local.notifier_function_name}"
+  retention_in_days = 30
+}
+
+
 # ============================================================
 # LAMBDA — INGESTION
 # ============================================================
@@ -12,7 +36,7 @@ data "archive_file" "lambda_ingest" {
 }
 
 resource "aws_iam_role" "ingestion" {
-  name = "proj06-lambda-ingestion-role"
+  name = "${var.name_prefix}-ingest-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -46,12 +70,12 @@ resource "aws_iam_role_policy" "ingestion_inline" {
 
 resource "aws_lambda_function" "ingestion" {
   filename         = data.archive_file.lambda_ingest.output_path
-  function_name    = "ingestion_lambda_function"
+  function_name    = local.ingest_function_name
   role             = aws_iam_role.ingestion.arn
   handler          = "index.handler"
   source_code_hash = data.archive_file.lambda_ingest.output_base64sha256
 
-  runtime = "nodejs22.x"
+  runtime = "nodejs24.x"
   timeout = 10
 
   environment {
@@ -63,14 +87,9 @@ resource "aws_lambda_function" "ingestion" {
   tags = {
     Project = "proj06"
   }
+
+  depends_on = [aws_cloudwatch_log_group.ingest_logs]
 }
-
-resource "aws_cloudwatch_log_group" "ingest_logs" {
-  name = "/aws/lambda/${aws_lambda_function.ingestion.function_name}"
-
-  retention_in_days = 30
-}
-
 
 # ============================================================
 # LAMBDA — PROCESSOR
@@ -87,7 +106,7 @@ data "archive_file" "lambda_processor" {
 }
 
 resource "aws_iam_role" "processor" {
-  name = "proj06-lambda-processor-role"
+  name = "${var.name_prefix}-processor-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -128,12 +147,12 @@ resource "aws_iam_role_policy" "processor_inline" {
 
 resource "aws_lambda_function" "processor" {
   filename         = data.archive_file.lambda_processor.output_path
-  function_name    = "processor_lambda_function"
+  function_name    = local.processor_function_name
   role             = aws_iam_role.processor.arn
   handler          = "index.handler"
   source_code_hash = data.archive_file.lambda_processor.output_base64sha256
 
-  runtime = "nodejs22.x"
+  runtime = "nodejs24.x"
   timeout = 30
 
   environment {
@@ -146,12 +165,18 @@ resource "aws_lambda_function" "processor" {
   tags = {
     Project = "proj06"
   }
+
+  depends_on = [aws_cloudwatch_log_group.processor_logs]
 }
 
 resource "aws_lambda_event_source_mapping" "process_sqs" {
   event_source_arn = var.sqs_arn
   function_name    = aws_lambda_function.processor.arn
   batch_size       = 5
+
+  # The processor returns the IDs of failed messages: only those are retried
+  # (and eventually sent to the DLQ), not the whole batch.
+  function_response_types = ["ReportBatchItemFailures"]
 }
 
 
@@ -169,7 +194,7 @@ data "archive_file" "lambda_notifier" {
 }
 
 resource "aws_iam_role" "notifier" {
-  name = "proj06-lambda-notifier-role"
+  name = "${var.name_prefix}-notifier-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -190,15 +215,17 @@ resource "aws_iam_role_policy_attachment" "notifier_logs" {
 
 resource "aws_lambda_function" "notifier" {
   filename         = data.archive_file.lambda_notifier.output_path
-  function_name    = "notifier_lambda_function"
+  function_name    = local.notifier_function_name
   role             = aws_iam_role.notifier.arn
   handler          = "index.handler"
   source_code_hash = data.archive_file.lambda_notifier.output_base64sha256
 
-  runtime = "nodejs22.x"
+  runtime = "nodejs24.x"
   timeout = 10
 
   tags = {
     Project = "proj06"
   }
+
+  depends_on = [aws_cloudwatch_log_group.notifier_logs]
 }

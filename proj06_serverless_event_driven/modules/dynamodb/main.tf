@@ -1,5 +1,5 @@
 resource "aws_dynamodb_table" "orders_table" {
-  name         = "orders-table"
+  name         = "${var.name_prefix}-orders"
   billing_mode = "PAY_PER_REQUEST"
 
   hash_key  = "PK"
@@ -13,6 +13,10 @@ resource "aws_dynamodb_table" "orders_table" {
   attribute {
     name = "SK"
     type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = true
   }
 
   tags = {
