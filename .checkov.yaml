@@ -1,0 +1,58 @@
+# Checkov configuration for the Terraform projects (proj05, proj06).
+#
+# Every skipped check below is a deliberate, documented decision — not a
+# silenced warning. They fall into three buckets:
+#   1. FALSE POSITIVE — Checkov can't see a link made across modules.
+#   2. LAB SCOPE      — requires a domain/certificate, or a paid service that
+#                       doesn't fit a short-lived, `make clean`-able lab stack.
+#   3. DEFERRED       — planned hardening, tracked for a later module.
+framework:
+  - terraform
+compact: true
+quiet: true
+skip-check:
+  # --- 1. FALSE POSITIVES ---------------------------------------------------
+  # SGs are created in modules/security and attached in modules/compute.
+  - CKV2_AWS_5
+  # NACL is attached via aws_network_acl_association, not inline subnet_ids.
+  - CKV2_AWS_1
+  # proj05 isolated-tier NACL: "all ports" ingress is only allowed from the
+  # two private subnet CIDRs, with an explicit deny-all for everything else.
+  # Port-level filtering is done by the security groups.
+  - CKV_AWS_352
+
+  # --- 2. LAB SCOPE: no domain name → no ACM certificate → HTTP only --------
+  - CKV_AWS_2        # ALB listener uses HTTPS
+  - CKV_AWS_103      # ALB uses TLS 1.2+
+  - CKV2_AWS_20      # ALB redirects HTTP to HTTPS
+  - CKV_AWS_378      # LB target group doesn't use HTTP
+  - CKV_AWS_260      # SG allows 0.0.0.0/0 on port 80 (public ALB by design)
+
+  # --- 2. LAB SCOPE: paid features at odds with $0-idle FinOps --------------
+  - CKV2_AWS_28      # WAF on public ALB (~$5/month + per-rule fees)
+  - CKV_AWS_158      # CloudWatch log groups encrypted with a KMS CMK ($1/key/month)
+  - CKV_AWS_136      # ECR encrypted with a KMS CMK (AES256 default is used)
+  - CKV_AWS_119      # DynamoDB encrypted with a KMS CMK (AWS-owned key is used)
+  - CKV_AWS_173      # Lambda env vars encrypted with a CMK (no secrets in them)
+  - CKV_AWS_224      # ECS exec logging encrypted with a CMK
+  - CKV_AWS_338      # Log retention >= 1 year (30 days is enough for a lab)
+  - CKV_AWS_91       # ALB access logs (S3 bucket + bucket policy per stack)
+  - CKV2_AWS_11      # VPC flow logs (CloudWatch ingestion cost)
+  - CKV_AWS_65       # ECS Container Insights (CloudWatch metrics cost)
+  - CKV_AWS_150      # ALB deletion protection — would break `make clean`
+
+  # --- 2. LAB SCOPE: not applicable to this architecture -------------------
+  - CKV_AWS_117      # Lambda inside a VPC — proj06 only calls AWS public APIs;
+                     # a VPC would require NAT Gateways or VPC endpoints.
+  - CKV_AWS_309      # API GW route authorization — public demo endpoint,
+                     # input is validated by the ingest Lambda.
+  - CKV_AWS_116      # Lambda DLQ — processor failures go to the SQS DLQ via
+                     # redrive; ingest is synchronous (API GW returns the error).
+  - CKV_AWS_272      # Lambda code signing (AWS Signer profile per function)
+  - CKV_AWS_394      # Pin AZ IDs on aws_availability_zones (2 AZs, names[0..1])
+
+  # --- 3. DEFERRED: planned for later roadmap modules -----------------------
+  - CKV_AWS_50       # Lambda X-Ray tracing → Module D (OpenTelemetry)
+  - CKV_AWS_115      # Lambda reserved concurrency → load-testing exercise
+  - CKV_AWS_131      # ALB drops invalid HTTP headers → hardening pass
+  - CKV_AWS_336      # ECS read-only root filesystem → Module C (hardening)

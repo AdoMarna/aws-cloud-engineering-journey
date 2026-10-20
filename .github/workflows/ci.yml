@@ -1,0 +1,147 @@
+# Static checks for the whole repository: no AWS credentials, no deployment.
+#
+# Supply-chain hygiene:
+#   - every third-party action is pinned to a full commit SHA (tags can be
+#     moved — see the trivy-action tag hijack of March 2026);
+#   - every downloaded binary is pinned to a version and verified by SHA-256.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  HADOLINT_VERSION: "2.12.0"
+  HADOLINT_SHA256: "56de6d5e5ec427e17b74fa48d51271c7fc0d61244bf5c90e828aab8362d55010"
+  TRIVY_VERSION: "0.74.0"
+  TRIVY_SHA256: "2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a"
+  TFLINT_VERSION: "v0.64.0"
+  CHECKOV_VERSION: "3.3.19"
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Lint every tracked shell script
+        run: |
+          shellcheck --version
+          git ls-files -z '*.sh' | xargs -0 shellcheck --severity=warning
+
+  hadolint:
+    name: Hadolint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install hadolint
+        run: |
+          curl -sSLo hadolint "https://github.com/hadolint/hadolint/releases/download/v${HADOLINT_VERSION}/hadolint-Linux-x86_64"
+          echo "${HADOLINT_SHA256}  hadolint" | sha256sum --check
+          chmod +x hadolint && sudo mv hadolint /usr/local/bin/
+
+      - name: Lint every Dockerfile
+        run: git ls-files -z '*Dockerfile*' | xargs -0 -n1 hadolint
+
+  terraform:
+    name: Terraform (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [proj05_terraform_iac, proj06_serverless_event_driven]
+    defaults:
+      run:
+        working-directory: ${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -diff
+
+      # -backend=false: validation needs providers, not the remote S3 state
+      - name: terraform init
+        run: terraform init -backend=false -input=false
+
+      - name: terraform validate
+        run: terraform validate
+
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+
+      - name: tflint
+        run: |
+          tflint --init
+          tflint --recursive --format compact
+
+  checkov:
+    name: Checkov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install checkov
+        run: pip install "checkov==${CHECKOV_VERSION}"
+
+      # Skipped checks are justified one by one in .checkov.yaml
+      - name: Scan Terraform projects
+        run: |
+          for project in proj05_terraform_iac proj06_serverless_event_driven; do
+            echo "::group::${project}"
+            checkov -d "${project}" --config-file .checkov.yaml
+            echo "::endgroup::"
+          done
+
+  images:
+    name: Image scan (${{ matrix.image.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - { name: proj04-app, context: proj04_container_orchestration, dockerfile: Dockerfile }
+          - { name: proj04-api, context: proj04_container_orchestration, dockerfile: Dockerfile.api }
+          - { name: proj05-app, context: proj05_terraform_iac, dockerfile: Dockerfile }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build image
+        run: |
+          docker build \
+            -f "${{ matrix.image.context }}/${{ matrix.image.dockerfile }}" \
+            -t "${{ matrix.image.name }}:ci" \
+            "${{ matrix.image.context }}"
+
+      - name: Install Trivy
+        run: |
+          archive="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -sSLO "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${archive}"
+          echo "${TRIVY_SHA256}  ${archive}" | sha256sum --check
+          tar -xzf "${archive}" trivy && sudo mv trivy /usr/local/bin/
+
+      # Fails on HIGH/CRITICAL vulnerabilities that already have a fix
+      - name: Scan image
+        run: |
+          trivy image --exit-code 1 --ignore-unfixed \
+            --severity HIGH,CRITICAL --no-progress \
+            "${{ matrix.image.name }}:ci"
