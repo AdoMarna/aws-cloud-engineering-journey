@@ -132,6 +132,17 @@ resource "aws_iam_role_policy" "processor_inline" {
     Version = "2012-10-17"
     Statement = [
       {
+        # Required by the SQS event source mapping (polling on the function's behalf)
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:ChangeMessageVisibility",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = var.sqs_arn
+      },
+      {
         Effect   = "Allow"
         Action   = "dynamodb:PutItem"
         Resource = var.dynamodb_arn
@@ -177,6 +188,9 @@ resource "aws_lambda_event_source_mapping" "process_sqs" {
   # The processor returns the IDs of failed messages: only those are retried
   # (and eventually sent to the DLQ), not the whole batch.
   function_response_types = ["ReportBatchItemFailures"]
+
+  # AWS checks the role's SQS permissions when the mapping is created
+  depends_on = [aws_iam_role_policy.processor_inline]
 }
 
 
