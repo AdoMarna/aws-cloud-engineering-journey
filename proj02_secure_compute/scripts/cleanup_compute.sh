@@ -80,7 +80,7 @@ fi
 for name in my_instance_one my_instance_two
 do
 	instance_id=$(aws ec2 describe-instances \
-		--filters Name="tag:Name",Values="$name" Name="instance-state-name",Values="pending,running,stopping,stopped" \
+		--filters "Name=tag:Name,Values=$name" "Name=instance-state-name,Values=pending,running,stopping,stopped" \
 		--query "Reservations[0].Instances[0].InstanceId" --output text 2>/dev/null || true)
 
 	if [[ -z "$instance_id" || "$instance_id" == "None" ]]

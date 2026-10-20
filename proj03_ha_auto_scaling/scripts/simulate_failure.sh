@@ -11,7 +11,7 @@ fail() {
 	exit 1
 }
 
-old_instance_id=$(aws ec2 describe-instances --filters Name="tag:Project",Values="proj03" Name="instance-state-name",Values="pending,running" --query "Reservations[0].Instances[0].InstanceId" --output text)
+old_instance_id=$(aws ec2 describe-instances --filters "Name=tag:Project,Values=proj03" "Name=instance-state-name,Values=pending,running" --query "Reservations[0].Instances[0].InstanceId" --output text)
 log "Killing instance: $old_instance_id"
 aws ec2 terminate-instances --instance-ids "$old_instance_id" >/dev/null
 aws ec2 wait instance-terminated --instance-ids "$old_instance_id"

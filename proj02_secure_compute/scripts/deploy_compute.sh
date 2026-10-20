@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034 # port/private_sub_id_* feed the EC2 section, currently commented out
 
 set -euo pipefail
 

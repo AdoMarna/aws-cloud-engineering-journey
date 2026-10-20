@@ -13,8 +13,8 @@ fail() {
 	exit 1
 }
 
-my_instance_one_id=$(aws ec2 describe-instances --filters Name="tag:Name",Values="my_instance_one" Name="instance-state-name",Values="pending,running,stopping,stopped" --query "Reservations[0].Instances[0].InstanceId" --output text)
-my_instance_two_id=$(aws ec2 describe-instances --filters Name="tag:Name",Values="my_instance_two" Name="instance-state-name",Values="pending,running,stopping,stopped" --query "Reservations[0].Instances[0].InstanceId" --output text)
+my_instance_one_id=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=my_instance_one" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query "Reservations[0].Instances[0].InstanceId" --output text)
+my_instance_two_id=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=my_instance_two" "Name=instance-state-name,Values=pending,running,stopping,stopped" --query "Reservations[0].Instances[0].InstanceId" --output text)
 
 if [[ -z "$my_instance_one_id" || "$my_instance_one_id" == "None" ]]
 then
