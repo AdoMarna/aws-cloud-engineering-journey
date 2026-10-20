@@ -2,7 +2,6 @@
 
 # Terraform local working files (never committed: state lives in the S3 backend)
 .terraform/
-.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 crash.log
