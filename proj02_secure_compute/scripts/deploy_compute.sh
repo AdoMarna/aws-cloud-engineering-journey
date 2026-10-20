@@ -278,11 +278,11 @@ for name in my_instance_one my_instance_two
 do
 	instance_id=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=$name" "Name=instance-state-name,Values=pending,running" --query "Reservations[0].Instances[0].InstanceId" --output text)
 
-	tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=Patch Group" --query "Tags[0].Value" --output text 2>/dev/null || true)
+	tag_value=$(aws ec2 describe-tags --filters "Name=resource-id,Values=$instance_id" "Name=key,Values=PatchGroup" --query "Tags[0].Value" --output text 2>/dev/null || true)
 	if [[ "$tag_value" != "$PATCH_GROUP" ]]
 	then
-		log "Tagging '$name' with 'Patch Group=$PATCH_GROUP'"
-		aws ec2 create-tags --resources "$instance_id" --tags "Key=Patch Group,Value=$PATCH_GROUP" >/dev/null
+		log "Tagging '$name' with 'PatchGroup=$PATCH_GROUP'"
+		aws ec2 create-tags --resources "$instance_id" --tags "Key=PatchGroup,Value=$PATCH_GROUP" >/dev/null
 	fi
 done
 

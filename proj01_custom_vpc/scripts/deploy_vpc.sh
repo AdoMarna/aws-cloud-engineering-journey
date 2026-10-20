@@ -147,12 +147,12 @@ else
 	printf "==> The 1st EIP has already been allocated, continuing...\n"
 fi
 
-nat_id_one=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" --query "NatGateways[0].NatGatewayId" --output text)
+nat_id_one=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text)
 if [[ -z "$nat_id_one" || "$nat_id_one" == "None" ]]
 then
 	printf "==> Creating the 1st NAT\n"
 	nat_id_one=$(aws ec2 create-nat-gateway --subnet-id "${subnet_ids[Public-Subnet-AZ1]}" --allocation-id "$eip_id_one" --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=First NAT},{Key=Project,Value=proj01}]' --query NatGateway.NatGatewayId --output text)
-	wait_until_visible "the 1st NAT" 'aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" --query "NatGateways[0].NatGatewayId" --output text' >/dev/null
+	wait_until_visible "the 1st NAT" 'aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text' >/dev/null
 	aws ec2 wait nat-gateway-available --nat-gateway-ids "$nat_id_one" >/dev/null
 else
 	printf "==> The 1st NAT already exists, continuing...\n"
@@ -197,12 +197,12 @@ else
 	printf "==> The 2nd EIP has already been allocated, continuing...\n"
 fi
 
-nat_id_two=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" --query "NatGateways[0].NatGatewayId" --output text)
+nat_id_two=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text)
 if [[ -z "$nat_id_two" || "$nat_id_two" == "None" ]]
 then
 	printf "==> Creating the 2nd NAT\n"
 	nat_id_two=$(aws ec2 create-nat-gateway --subnet-id "${subnet_ids[Public-Subnet-AZ2]}" --allocation-id "$eip_id_two" --tag-specifications 'ResourceType=natgateway,Tags=[{Key=Name,Value=Second NAT},{Key=Project,Value=proj01}]' --query NatGateway.NatGatewayId --output text)
-	wait_until_visible "the 2nd NAT" 'aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" --query "NatGateways[0].NatGatewayId" --output text' >/dev/null
+	wait_until_visible "the 2nd NAT" 'aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text' >/dev/null
 	aws ec2 wait nat-gateway-available --nat-gateway-ids "$nat_id_two" >/dev/null
 else
 	printf "==> The 2nd NAT already exists, continuing...\n"
