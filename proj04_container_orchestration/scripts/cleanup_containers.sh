@@ -44,8 +44,8 @@ scale_down_and_delete_service() {
 	local service_name="$1"
 	local resource="service/proj04-cluster/$service_name"
 	local status
-	local policy
-	local target
+	local policy_check
+	local target_scalable_arn
 	
 	status=$(aws ecs describe-services \
 		--cluster "$CLUSTER_NAME" \
@@ -62,9 +62,9 @@ scale_down_and_delete_service() {
 	policy_check=$(aws application-autoscaling describe-scaling-policies \
 		--service-namespace ecs \
 		--resource-id "$resource" \
-		--query ScalingPolicies[0].PolicyName \
-		--output text)
-	if [[ -n "$policy_check" || "$policy_check" != "None" ]]
+		--query "ScalingPolicies[0].PolicyName" \
+		--output text 2>/dev/null || true)
+	if [[ -n "$policy_check" && "$policy_check" != "None" ]]
 	then
 		log "Delete policy"
 		aws application-autoscaling delete-scaling-policy \
@@ -78,9 +78,9 @@ scale_down_and_delete_service() {
 	target_scalable_arn=$(aws application-autoscaling describe-scalable-targets \
 		--service-namespace ecs \
 		--resource-id "$resource" \
-		--query ScalableTargets[0].ScalableTargetARN \
+		--query "ScalableTargets[0].ScalableTargetARN" \
 		--output text 2>/dev/null || true)
-	if [[ -n "$target_scalable_arn" || "$target_scalable_arn" != "None" ]]
+	if [[ -n "$target_scalable_arn" && "$target_scalable_arn" != "None" ]]
 	then
 		log "Deregister scalable target"
 		aws application-autoscaling deregister-scalable-target \
