@@ -120,7 +120,8 @@ Provisions, in order:
 3. A Security Group allowing inbound TCP/80 from `10.0.0.0/16` only — no
    port 22 rule exists anywhere in this project.
 4. `my_instance_one` (AZ1) and `my_instance_two` (AZ2): `t3.micro`, no
-   public IP, IMDSv2 enforced (`HttpTokens=required`), bootstrapped by
+   public IP, IMDSv2 enforced (`HttpTokens=required`), instance tags
+   exposed in metadata (`InstanceMetadataTags=enabled`), bootstrapped by
    `templates/userdata.sh`.
 5. `inject_config.sh`, to publish the application config to SSM Parameter
    Store before the instances need it.
@@ -128,11 +129,14 @@ Provisions, in order:
    (`ssm describe-instance-information` polling on `PingStatus=Online`).
 7. A self-owned Patch Baseline (`proj02-al2023-baseline`, Amazon Linux
    2023, auto-approves Security/Bugfix patches of Critical/Important
-   severity) registered against the `proj02-dev` Patch Group, an SSM
+   severity) registered against the `proj02-dev` Patch Group — the
+   instances are tagged `PatchGroup=proj02-dev` (not `Patch Group`: tag
+   keys containing spaces are rejected once tags are exposed in instance
+   metadata) — an SSM
    Inventory association (software inventory every 30 min), and a Patch
    Manager scan association (daily) — both targeted by `Project=proj02`
    tag.
-8. Triggers an immediate patch scan and prints the compliance report via
+8. Waits for the patch scan and prints the compliance report as a table via
    `aws ssm describe-instance-patch-states`.
 
 ### `templates/userdata.sh`
