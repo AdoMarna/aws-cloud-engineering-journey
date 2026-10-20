@@ -44,10 +44,10 @@ pub_az2_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,V
 # private route tables & NAT gateways
 private_az1_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az1'].RouteTableAssociationId | [0]" --output text)
 private_route_table_id_one=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ1" --query "RouteTables[0].RouteTableId" --output text)
-nat_id_one=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" --query "NatGateways[0].NatGatewayId" --output text)
+nat_id_one=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=First NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text)
 private_route_table_id_two=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].RouteTableId" --output text)
 private_az2_associated_id=$(aws ec2 describe-route-tables --filters "Name=tag:Name,Values=Private-RT-AZ2" --query "RouteTables[0].Associations[?SubnetId=='$priv_subnet_id_az2'].RouteTableAssociationId | [0]" --output text)
-nat_id_two=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" --query "NatGateways[0].NatGatewayId" --output text)
+nat_id_two=$(aws ec2 describe-nat-gateways --filter "Name=tag:Name,Values=Second NAT" "Name=state,Values=pending,available" --query "NatGateways[0].NatGatewayId" --output text)
 
 # vpc endpoint
 vpc_endpoint_id=$(aws ec2 describe-vpc-endpoints --filters "Name=tag:Name,Values=VPC Endpoint" --query VpcEndpoints[0].VpcEndpointId --output text)
